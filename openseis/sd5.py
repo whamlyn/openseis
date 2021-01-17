@@ -14,75 +14,64 @@ class Seis3D():
     OpenSeis class for 3D seismic datasets
     """
 
-    def __init__(self):
-
-        self.il_min = None
-        self.il_max = None
-        self.il_step = None
-
-        self.xl_min = None
-        self.xl_max = None
-        self.xl_step = None
-
-        self.z_min = None
-        self.z_max = None
-        self.z_step = None
-
-        self.p1x = None
-        self.p1y = None
-        self.p1il = None
-        self.p1xl = None
-
-        self.p2x = None
-        self.p2y = None
-        self.p2il = None
-        self.p2xl = None
-
-        self.p3x = None
-        self.p3y = None
-        self.p3il = None
-        self.p3xl = None
-
-        self.x_origin = None
-        self.y_origin = None
-        self.azimuth = None
-
-        self.num_samp = None
-
-    def set_geom_3pts(il1, xl1, x1, y1, il2, xl2, x2, y2, il3, xl3, x3, y3):
+    def __init__(self, sg5file):
         """
-        Define the geometry of the 3D survey using inline, xline, x, y values
-        for 3 points within the survey.
-
-        Parameters
-        ----------
-        il1 : TYPE
-            DESCRIPTION.
-        xl1 : TYPE
-            DESCRIPTION.
-        x1 : TYPE
-            DESCRIPTION.
-        y1 : TYPE
-            DESCRIPTION.
-        il2 : TYPE
-            DESCRIPTION.
-        xl2 : TYPE
-            DESCRIPTION.
-        x2 : TYPE
-            DESCRIPTION.
-        y2 : TYPE
-            DESCRIPTION.
-        il3 : TYPE
-            DESCRIPTION.
-        xl3 : TYPE
-            DESCRIPTION.
-        x3 : TYPE
-            DESCRIPTION.
-        y3 : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
+        Constructor method for Seis3D class
         """
+
+        self.sg5file = sg5file
+
+        with h5py.File(self.sg5file, 'r') as fd:
+            self.il_min = fd.attrs['il_min']
+            self.il_max = fd.attrs['il_max']
+            self.xl_min = fd.attrs['xl_min']
+            self.xl_max = fd.attrs['xl_max']
+            self.z_min = fd.attrs['z_min']
+            self.z_max = fd.attrs['z_max']
+            self.z_type = fd.attrs['z_type']
+            self.nil = fd.attrs['nil']
+            self.nxl = fd.attrs['nxl']
+            self.nz = fd.attrs['nz']
+
+
+    def get_il(self, il):
+
+        with h5py.File(self.sg5file, 'r') as fd:
+            ili = il - fd.attrs['il_min']
+            tdata = fd['seis']['tdata'][ili, :]
+
+        return tdata
+
+    def get_xl(self, xl):
+
+        with h5py.File(self.sg5file, 'r') as fd:
+            xli = xl - fd.attrs['xl_min']
+            tdata = fd['seis']['tdata'][:, xli]
+
+        return tdata
+
+    def get_zslice(self, zval):
+
+        with h5py.File(self.sg5file, 'r') as fd:
+            z_min = fd.attrs['z_min']
+            dz = fd.attrs['dz']
+
+            zi = round((zval - z_min)/dz)
+            tdata = fd['seis']['tdata'][:, :, zi]
+
+        return tdata
+
+    def get_thead(self, key):
+        with h5py.File(self.sg5file, 'r') as fd:
+            thead = fd['seis']['thead'][key][:]
+        return thead
+
+    def open_sd5file(self):
+        self.fd = h5py.File(self.sg5file, 'r')
+        return self.fd
+
+    def close_sd5file(self, fd=None):
+        if fd==None:
+            self.fd.close()
+        else:
+            fd.close()
