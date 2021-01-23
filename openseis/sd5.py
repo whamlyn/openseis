@@ -191,3 +191,4 @@ class Seis3D():
                 # requiring loops
                 g1[key][:, :] = tmp[:, :]
 
+        self.retreive_attributes()
